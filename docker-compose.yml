@@ -48,7 +48,7 @@ services:
     image: tiredofit/mariadb
     container_name: automail-db
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - ./db:/var/lib/mysql
     environment:
