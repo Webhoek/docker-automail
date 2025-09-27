@@ -2,8 +2,11 @@
 
 # Quick script to pull latest changes if repo already exists in container
 
-echo "Quick Git Pull for Automail"
-echo "=========================="
+# Get branch from first argument, default to master
+BRANCH=${1:-master}
+
+echo "Quick Git Pull for Automail (branch: $BRANCH)"
+echo "=============================================="
 
 # Check if container is running
 if ! docker ps | grep -q automail-app; then
@@ -45,8 +48,8 @@ if [ $? -ne 0 ]; then
     echo "Fetching from remote..."
     docker exec automail-app bash -c "cd /www/html && git fetch --depth=1"
     
-    echo "Resetting to origin/master..."
-    docker exec automail-app bash -c "cd /www/html && git reset --hard origin/master"
+    echo "Resetting to origin/$BRANCH..."
+    docker exec automail-app bash -c "cd /www/html && git reset --hard origin/$BRANCH"
     
     echo "Restoring data volume symlinks..."
     # Restore storage symlink to /data/storage
@@ -61,12 +64,12 @@ else
     docker exec automail-app bash -c "cd /www/html && git stash save 'Auto-stash before pull'" 2>/dev/null
     
     echo "Pulling latest changes..."
-    docker exec automail-app bash -c "cd /www/html && git pull origin master" 2>/dev/null
+    docker exec automail-app bash -c "cd /www/html && git pull origin $BRANCH" 2>/dev/null
     
     if [ $? -ne 0 ]; then
         echo "Pull failed due to conflicts. Forcing update..."
-        docker exec automail-app bash -c "cd /www/html && git fetch origin master"
-        docker exec automail-app bash -c "cd /www/html && git reset --hard origin/master"
+        docker exec automail-app bash -c "cd /www/html && git fetch origin $BRANCH"
+        docker exec automail-app bash -c "cd /www/html && git reset --hard origin/$BRANCH"
         
         echo "Restoring data volume symlinks after force reset..."
         # Restore storage symlink to /data/storage
