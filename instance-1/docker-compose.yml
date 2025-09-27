@@ -1,18 +1,18 @@
 services:
-  automail-app:
+  automail-app-1:
     build:
       context: .
       args:
         - GITHUB_USERNAME=${GITHUB_USERNAME}
         - GITHUB_TOKEN=${GITHUB_TOKEN}
         - SITE_URL=${SITE_URL}    
-    container_name: automail-app
+    container_name: automail-app-1
     ports:
-      - "8080:80"  # Changed to bind only to localhost for proxy
+      - "127.0.0.1:8081:80"
     # links:                      # ← optional: safe to remove
     #   - automail-db
     depends_on:                   # ← preferred over links
-      - automail-db
+      - automail-db-1
     volumes:
       ### If you want to perform customizations to the source and have access to it, then uncomment this line - This includes modules
       #- ./data:/www/html
@@ -22,17 +22,17 @@ services:
       #- ./modules:/www/html/Modules
       - ./logs/:/www/logs
     environment:
-      - CONTAINER_NAME=${CONTAINER_NAME:-automail-app}
+      - CONTAINER_NAME=${CONTAINER_NAME:-automail-app-1}
       - APPLICATION_NAME=${APPLICATION_NAME:-Automail}
       - DEBUG_MODE=${DEBUG_MODE:-TRUE}
-      - DB_HOST=${DB_HOST:-automail-db}
+      - DB_HOST=${DB_HOST:-automail-db-1}
       - DB_NAME=${DB_NAME:-automail}
       - DB_USER=${DB_USER:-automail}
       - DB_PASS=${DB_PASS:-automail}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASS=${ADMIN_PASS}                             # ← rotate after bootstrap
-      - APP_TRUSTED_PROXIES=${APP_TRUSTED_PROXIES:-127.0.0.1}                   # ← removed quotes
-      - ENABLE_SSL_PROXY=${ENABLE_SSL_PROXY:-TRUE}                            # ← was FALSE
+      - APP_TRUSTED_PROXIES=${APP_TRUSTED_PROXIES:-127.0.0.1,172.17.0.0/16}    # ← proxy IPs
+      - ENABLE_SSL_PROXY=${ENABLE_SSL_PROXY:-TRUE}                            # ← SSL handled by proxy
       - DISPLAY_ERRORS=${DISPLAY_ERRORS:-false}
       - TIMEZONE=${TIMEZONE:-Europe/Amsterdam}
       - ENABLE_AUTO_UPDATE=${ENABLE_AUTO_UPDATE:-false}
@@ -44,11 +44,11 @@ services:
       - PHP_UPLOAD_MAX_SIZE=${PHP_UPLOAD_MAX_SIZE:-500M}       # Increase upload max size to 500MB
     restart: always
 
-  automail-db:
+  automail-db-1:
     image: tiredofit/mariadb
-    container_name: automail-db
+    container_name: automail-db-1
     ports:
-      - "3307:3306"  # Bind only to localhost for security
+      - "127.0.0.1:33071:3306"
     volumes:
       - ./db:/var/lib/mysql
     environment:
@@ -56,21 +56,21 @@ services:
       - DB_NAME=${DB_NAME:-automail}
       - DB_USER=${DB_USER:-automail}
       - DB_PASS=${DB_PASS:-automail}
-      - CONTAINER_NAME=${DB_CONTAINER_NAME:-automail-db}
+      - CONTAINER_NAME=${DB_CONTAINER_NAME:-automail-db-1}
     restart: always
 
-  automail-db-backup:
-    container_name: automail-db-backup
+  automail-db-backup-1:
+    container_name: automail-db-backup-1
     image: tiredofit/db-backup
     # links:                     # ← optional: safe to remove
     #   - automail-db
     depends_on:                  # ← preferred over links
-      - automail-db
+      - automail-db-1
     volumes:
       - ./dbbackup:/backup
     environment:
-      - CONTAINER_NAME=${BACKUP_CONTAINER_NAME:-automail-db-backup}
-      - DB_HOST=${DB_HOST:-automail-db}
+      - CONTAINER_NAME=${BACKUP_CONTAINER_NAME:-automail-db-backup-1}
+      - DB_HOST=${DB_HOST:-automail-db-1}
       - DB_TYPE=${DB_TYPE:-mariadb}
       - DB_NAME=${DB_NAME:-automail}
       - DB_USER=${DB_USER:-automail}
