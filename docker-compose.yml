@@ -8,7 +8,7 @@ services:
         - SITE_URL=${SITE_URL}    
     container_name: automail-app
     ports:
-      - "8080:80"  # Changed to bind only to localhost for proxy
+      - "127.0.0.1:8080:80"  # Changed to bind only to localhost for proxy
     # links:                      # ← optional: safe to remove
     #   - automail-db
     depends_on:                   # ← preferred over links
@@ -48,7 +48,7 @@ services:
     image: tiredofit/mariadb
     container_name: automail-db
     ports:
-      - "3307:3306"  # Bind only to localhost for security
+      - "127.0.0.1:3307:3306"  # Bind only to localhost for security
     volumes:
       - ./db:/var/lib/mysql
     environment:
